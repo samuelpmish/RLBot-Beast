@@ -8,6 +8,7 @@ import moves
 from vec import Vec3
 from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
+from rlbot.utils.game_state_util import GameState, BallState, CarState, Physics, Vector3, Rotator
 
 
 class Beast(BaseAgent):
@@ -34,6 +35,8 @@ class Beast(BaseAgent):
         self.renderer.begin_rendering()
 
         # predict.draw_ball_path(data.renderer, data, 4.5, 0.11)
+
+        self.attract(data)
 
         if self.dodge_control.is_dodging:
 
@@ -62,6 +65,17 @@ class Beast(BaseAgent):
     def draw_status(self, data):
         if self.last_task is not None:
             data.renderer.draw_string_3d(data.car.location.tuple(), 1, 1, str(self.last_task), self.last_task.color(data.renderer))
+
+    def attract(self, data):
+        # Accelerate the ball towards the car
+        ball_vel = data.ball.velocity
+        ball_state = BallState(Physics(velocity=Vector3(z=ball_vel.z + 650 / 90)))
+        car_vel = data.car.velocity
+        car_state = CarState(Physics(velocity=Vector3(z=car_vel.z + 650 / 90)))
+        enemy_vel = data.enemy.velocity
+        enemy_state = CarState(Physics(velocity=Vector3(z=enemy_vel.z + 650 / 90)))
+        self.set_game_state(GameState(ball=ball_state, cars={self.index: car_state, 1 - self.index: enemy_state}))
+
 
 def get_offense_system(agent):
     off_choices = [
